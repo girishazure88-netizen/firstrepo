@@ -1,0 +1,52 @@
+trigger:
+- main
+
+pool:
+  name: Default  # self-hosted agent
+
+variables:
+  pythonVersion: '3.11'
+
+steps:
+
+# Step 1: Use Python
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(pythonVersion)'
+  displayName: 'Use Python $(pythonVersion)'
+
+# Step 2: Install dependencies + Bandit
+- script: |
+    python -m pip install --upgrade pip
+    pip install bandit
+    pip install -r requirements.txt
+  displayName: 'Install dependencies'
+
+# Step 3: Run Bandit security scan
+- script: |
+    bandit -r . -f txt -o bandit-report.txt || true
+  displayName: 'Run Bandit Security Scan'
+
+# Step 4: Publish Bandit report as artifact
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: 'bandit-report.txt'
+    artifactName: 'BanditReport'
+  displayName: 'Publish Bandit Report'
+
+# Step 5: Build (archive the app)
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+    includeRootFolder: false
+    archiveType: zip
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+  displayName: 'Archive app'
+
+# Step 6: Publish build artifact
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
+  displayName: 'Publish build artifact'
