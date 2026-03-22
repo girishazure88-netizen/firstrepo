@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: 'Default'  # Or whatever you named your local agent pool
 
 steps:
 # Step 1: Set up Python
