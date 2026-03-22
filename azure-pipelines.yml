@@ -1,27 +1,29 @@
 # Python to Linux Web App on Azure
 # Build your Python project and deploy it to Azure as a Linux Web App.
-# Change python version to one thats appropriate for your application.
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
 - main
 
+parameters:
+  - name: environmentName
+    type: string
+    default: staging
+  - name: webAppName
+    type: string
+    default: my-web-app  # REPLACE_ME: your actual Azure Web App name
+
 variables:
   # Azure Resource Manager connection created during pipeline creation
   azureServiceConnectionId: '0687bdfc-9c4a-4646-893a-9d8a2f7ff0c4'
 
-  # Web app name
-  webAppName: ''
-
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
-
-  # Environment name
-  environmentName: ''
 
   # Project root folder. Point to the folder containing manage.py file.
   projectRoot: $(System.DefaultWorkingDirectory)
 
+  # Python version
   pythonVersion: '3.11'
 
 stages:
@@ -41,7 +43,7 @@ stages:
         python -m venv antenv
         source antenv/bin/activate
         python -m pip install --upgrade pip
-        pip install setup
+        pip install setuptools
         pip install -r requirements.txt
       workingDirectory: $(projectRoot)
       displayName: "Install requirements"
@@ -67,7 +69,7 @@ stages:
   - deployment: DeploymentJob
     pool:
       vmImage: $(vmImageName)
-    environment: $(environmentName)
+    environment: ${{ parameters.environmentName }}
     strategy:
       runOnce:
         deploy:
@@ -79,8 +81,8 @@ stages:
             displayName: 'Use Python version'
 
           - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : '
+            displayName: 'Deploy Azure Web App : ${{ parameters.webAppName }}'
             inputs:
               azureSubscription: $(azureServiceConnectionId)
-              appName: $(webAppName)
+              appName: ${{ parameters.webAppName }}
               package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
