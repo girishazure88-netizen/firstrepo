@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  name: 'Default'  # Or whatever you named your local agent pool
+  vmImage: 'ubuntu-latest' # This uses Microsoft's hardware, not your "Default" pool
 
 steps:
 # Step 1: Set up Python
